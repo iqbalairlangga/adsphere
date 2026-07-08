@@ -8,7 +8,7 @@ import {
   IsBoolean,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { RoleType, UserStatus } from '../../../common/constants';
+import { UserRole, UserStatus } from '../../../common/constants';
 
 export class UpdateUserDto {
   @ApiPropertyOptional({ example: 'John Updated' })
@@ -28,10 +28,10 @@ export class UpdateUserDto {
   @IsString()
   avatar?: string;
 
-  @ApiPropertyOptional({ enum: RoleType })
+  @ApiPropertyOptional({ enum: UserRole })
   @IsOptional()
-  @IsEnum(RoleType)
-  role?: RoleType;
+  @IsEnum(UserRole)
+  role?: UserRole;
 
   @ApiPropertyOptional({ enum: UserStatus })
   @IsOptional()

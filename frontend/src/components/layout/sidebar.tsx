@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
-  CampaignIcon,
+  Flag,
   BarChart3,
   Wallet,
   Settings,
@@ -35,7 +35,7 @@ interface NavItem {
 
 const advertiserLinks: NavItem[] = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { title: 'Campaigns', href: '/dashboard/campaign', icon: CampaignIcon },
+  { title: 'Campaigns', href: '/dashboard/campaign', icon: Flag },
   { title: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
   { title: 'Billing', href: '/dashboard/billing', icon: DollarSign },
   { title: 'Wallet', href: '/dashboard/wallet', icon: Wallet },

@@ -6,7 +6,7 @@ export class CreateRoleDto {
   @IsString()
   @MinLength(2)
   @MaxLength(50)
-  name: string;
+  name!: string;
 
   @ApiPropertyOptional({ example: 'Manages advertising campaigns' })
   @IsOptional()

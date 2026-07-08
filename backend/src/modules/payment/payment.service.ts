@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
+import Stripe from 'stripe';
 
 @Injectable()
 export class PaymentService {
@@ -14,8 +15,7 @@ export class PaymentService {
     const stripeKey = this.configService.get<string>('payment.stripe.secretKey');
     if (stripeKey) {
       try {
-        const Stripe = require('stripe');
-        this.stripe = new Stripe(stripeKey);
+        this.stripe = new Stripe(stripeKey, { apiVersion: '2025-02-24.acacia' } as any);
       } catch { this.logger.warn('Stripe not available'); }
     }
   }

@@ -18,7 +18,7 @@ export class CreateCampaignDto {
   @IsString()
   @MinLength(3)
   @MaxLength(200)
-  name: string;
+  name!: string;
 
   @ApiPropertyOptional({ example: 'Campaign for summer sales promotion' })
   @IsOptional()
@@ -34,7 +34,7 @@ export class CreateCampaignDto {
   @ApiProperty({ example: 5000 })
   @IsNumber()
   @Min(0)
-  budget: number;
+  budget!: number;
 
   @ApiPropertyOptional({ example: 500 })
   @IsOptional()

@@ -2,6 +2,7 @@
   "name": "adsphere",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "Enterprise Advertising Platform",
   "scripts": {
     "dev": "turbo dev",
@@ -41,12 +42,23 @@
     "typescript": "^5.5.0"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx}": ["eslint --fix", "prettier --write"],
-    "*.{json,md,yaml,yml}": ["prettier --write"]
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yaml,yml}": [
+      "prettier --write"
+    ]
   },
   "config": {
     "commitizen": {
       "path": "cz-conventional-changelog"
     }
+  },
+  "dependencies": {
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "typescript-eslint": "^8.63.0"
   }
 }

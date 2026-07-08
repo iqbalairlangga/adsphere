@@ -8,7 +8,7 @@ import {
   Matches,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { RoleType } from '../../../common/constants';
+import { UserRole } from '../../../common/constants';
 
 export class RegisterDto {
   @ApiProperty({
@@ -16,7 +16,7 @@ export class RegisterDto {
     description: 'User email address',
   })
   @IsEmail({}, { message: 'Invalid email address' })
-  email: string;
+  email!: string;
 
   @ApiProperty({
     example: 'StrongP@ssw0rd!',
@@ -34,7 +34,7 @@ export class RegisterDto {
         'Password must contain uppercase, lowercase, number, and special character',
     },
   )
-  password: string;
+  password!: string;
 
   @ApiPropertyOptional({
     example: 'John Doe',
@@ -47,11 +47,11 @@ export class RegisterDto {
   name?: string;
 
   @ApiPropertyOptional({
-    enum: RoleType,
-    example: RoleType.ADVERTISER,
+    enum: UserRole,
+    example: UserRole.ADVERTISER,
     description: 'User role',
   })
   @IsOptional()
-  @IsEnum(RoleType, { message: 'Invalid role' })
-  role?: RoleType;
+  @IsEnum(UserRole, { message: 'Invalid role' })
+  role?: UserRole;
 }

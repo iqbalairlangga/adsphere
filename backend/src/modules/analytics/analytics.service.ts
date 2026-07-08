@@ -3,7 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../../redis/redis.service';
 import * as csvStringify from 'csv-stringify/sync';
 import * as ExcelJS from 'exceljs';
-import * as PDFDocument from 'pdfkit';
+import PDFDocument from 'pdfkit';
 
 @Injectable()
 export class AnalyticsService {
@@ -65,7 +65,7 @@ export class AnalyticsService {
 
     const [todayImp, todayClicks, activeCampaigns] = await Promise.all([
       this.prisma.adImpression.count({
-        where: { createdAt: { gte: today }, campaign: { userId } },
+        where: { createdAt: { gte: today }, advertisement: { campaign: { userId } } },
       }),
       this.prisma.adClick.count({
         where: { createdAt: { gte: today }, advertisement: { campaign: { userId } } },

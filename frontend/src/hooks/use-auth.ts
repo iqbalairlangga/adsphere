@@ -51,6 +51,7 @@ export function useAuth() {
         await authService.logout(tokens.refreshToken);
       }
     } catch {
+      // Ignore logout errors
     } finally {
       storeLogout();
       router.push('/auth/login');

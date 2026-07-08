@@ -6,7 +6,7 @@ export class CreatePermissionDto {
   @IsString()
   @MinLength(3)
   @MaxLength(100)
-  name: string;
+  name!: string;
 
   @ApiPropertyOptional({ example: 'Allows creating new campaigns' })
   @IsOptional()
@@ -16,9 +16,9 @@ export class CreatePermissionDto {
 
   @ApiProperty({ example: 'campaign' })
   @IsString()
-  resource: string;
+  resource!: string;
 
   @ApiProperty({ example: 'create' })
   @IsString()
-  action: string;
+  action!: string;
 }

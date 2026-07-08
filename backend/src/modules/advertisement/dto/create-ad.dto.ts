@@ -16,17 +16,17 @@ import { AdType } from '../../../common/constants';
 export class CreateAdDto {
   @ApiProperty()
   @IsUUID('4')
-  campaignId: string;
+  campaignId!: string;
 
   @ApiProperty({ enum: AdType, example: AdType.BANNER })
   @IsEnum(AdType)
-  type: AdType;
+  type!: AdType;
 
   @ApiProperty({ example: 'Summer Sale Banner 728x90' })
   @IsString()
   @MinLength(3)
   @MaxLength(200)
-  title: string;
+  title!: string;
 
   @ApiPropertyOptional({ example: 'Click here for amazing summer deals!' })
   @IsOptional()

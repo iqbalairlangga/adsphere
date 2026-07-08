@@ -9,7 +9,8 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisService } from '../../redis/redis.service';
-import { hashPassword, comparePassword, generateToken } from '../../common/utils/password.utils';
+import { hashPassword, comparePassword } from '../../common/utils/password.utils';
+import { generateToken } from '../../common/utils/crypto.utils';
 import { hashToken } from '../../common/utils/crypto.utils';
 import { v4 as uuid } from 'uuid';
 import * as speakeasy from 'speakeasy';
@@ -60,7 +61,7 @@ export class AuthService {
     };
   }
 
-  async login(dto: { email: string; password: string; twoFactorCode?: string }) {
+  async login(dto: { email: string; password: string; twoFactorCode?: string; ip?: string; userAgent?: string }) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
       include: { wallet: true },
@@ -360,12 +361,12 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('auth.jwtSecret'),
       expiresIn: this.configService.get<string>('auth.jwtExpiresIn', '15m'),
-    });
+    } as any);
 
     const refreshToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('auth.jwtRefreshSecret'),
       expiresIn: this.configService.get<string>('auth.jwtRefreshExpiresIn', '7d'),
-    });
+    } as any);
 
     return { accessToken, refreshToken };
   }

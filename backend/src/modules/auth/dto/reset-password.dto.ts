@@ -6,7 +6,7 @@ export class ResetPasswordDto {
     description: 'Password reset token received via email',
   })
   @IsString()
-  token: string;
+  token!: string;
 
   @ApiProperty({
     example: 'NewStrongP@ssw0rd!',
@@ -24,5 +24,5 @@ export class ResetPasswordDto {
         'Password must contain uppercase, lowercase, number, and special character',
     },
   )
-  password: string;
+  password!: string;
 }

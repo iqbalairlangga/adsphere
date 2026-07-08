@@ -9,8 +9,8 @@ import { Prisma } from '@prisma/client';
 
 interface RequestContext {
   ip: string;
-  userAgent: string;
-  referer: string;
+  userAgent?: string;
+  referer?: string;
   language?: string;
   sessionId?: string;
 }
@@ -64,7 +64,7 @@ export class AdvertisementService {
         callToAction: dto.callToAction,
         altText: dto.altText,
         metadata: dto.metadata || Prisma.JsonNull,
-        isATestVariant: dto.isATestVariant ?? false,
+        isABTestVariant: dto.isABTestVariant ?? false,
         aTestGroup: dto.aTestGroup,
         status: AdStatus.PENDING,
       },
@@ -185,7 +185,7 @@ export class AdvertisementService {
     if (dto.callToAction !== undefined) data.callToAction = dto.callToAction;
     if (dto.altText !== undefined) data.altText = dto.altText;
     if (dto.metadata !== undefined) data.metadata = dto.metadata;
-    if (dto.isATestVariant !== undefined) data.isATestVariant = dto.isATestVariant;
+    if (dto.isABTestVariant !== undefined) data.isABTestVariant = dto.isABTestVariant;
     if (dto.aTestGroup !== undefined) data.aTestGroup = dto.aTestGroup;
     if (dto.status !== undefined) {
       if (dto.status === AdStatus.ACTIVE && ad.campaign.status !== 'ACTIVE') {
@@ -315,8 +315,9 @@ export class AdvertisementService {
             campaign: {
               select: {
                 id: true, name: true, type: true, targeting: true,
-                schedule: true, isATestEnabled: true, budget: true,
-                spent: true, dailyBudget: true,
+                schedule: true, isABTestEnabled: true, budget: true,
+                spent: true, dailyBudget: true, startDate: true,
+                endDate: true,
               },
             },
           },
@@ -380,7 +381,7 @@ export class AdvertisementService {
 
     const content = ad.html || this.buildAdContent(ad, clickUrl, trackingPixelUrl);
 
-    this.recordImpressionAsync(ad.id, adUnitId, context);
+    this.recordImpressionAsync(ad.id, adUnit.id, context);
 
     return {
       type: 'ad',
@@ -425,7 +426,7 @@ export class AdvertisementService {
         groups.get(group)!.push(p);
       }
 
-      const abCampaigns = placements.filter((p) => p.advertisement.campaign.isATestEnabled);
+      const abCampaigns = placements.filter((p) => p.advertisement.campaign.isABTestEnabled);
       if (abCampaigns.length > 0) {
         const groupKeys = Array.from(groups.keys());
         const selectedGroup = groupKeys[Math.floor(Math.random() * groupKeys.length)];
@@ -482,21 +483,21 @@ export class AdvertisementService {
     }
 
     if (targeting.devices && Array.isArray(targeting.devices) && targeting.devices.length > 0) {
-      const device = this.detectDevice(context.userAgent);
+      const device = this.detectDevice(context.userAgent || '');
       if (!targeting.devices.some((d: string) => d.toLowerCase() === device.toLowerCase())) {
         return false;
       }
     }
 
     if (targeting.browsers && Array.isArray(targeting.browsers) && targeting.browsers.length > 0) {
-      const browser = this.detectBrowser(context.userAgent);
+      const browser = this.detectBrowser(context.userAgent || '');
       if (!targeting.browsers.some((b: string) => b.toLowerCase() === browser.toLowerCase())) {
         return false;
       }
     }
 
     if (targeting.os && Array.isArray(targeting.os) && targeting.os.length > 0) {
-      const os = this.detectOS(context.userAgent);
+      const os = this.detectOS(context.userAgent || '');
       if (!targeting.os.some((o: string) => o.toLowerCase() === os.toLowerCase())) {
         return false;
       }
@@ -532,9 +533,9 @@ export class AdvertisementService {
       try {
         const isFraud = await this.checkFraud('impression', adId, context);
         const country = this.geoLookup(context.ip);
-        const device = this.detectDevice(context.userAgent);
-        const browser = this.detectBrowser(context.userAgent);
-        const os = this.detectOS(context.userAgent);
+        const device = this.detectDevice(context.userAgent || '');
+        const browser = this.detectBrowser(context.userAgent || '');
+        const os = this.detectOS(context.userAgent || '');
 
         const countKey = `impressions:${adId}:${context.ip}`;
         const impressionCount = await this.redisService.increment(countKey);
@@ -569,10 +570,16 @@ export class AdvertisementService {
           },
         });
 
-        await this.prisma.campaign.update({
-          where: { advertisements: { some: { id: adId } } },
-          data: { spent: { increment: cost } },
+        const adRecord = await this.prisma.advertisement.findUnique({
+          where: { id: adId },
+          select: { campaignId: true },
         });
+        if (adRecord) {
+          await this.prisma.campaign.update({
+            where: { id: adRecord.campaignId },
+            data: { spent: { increment: cost } },
+          });
+        }
 
         await this.redisService.del(`ad:${adId}`);
       } catch (err) {
@@ -723,7 +730,7 @@ export class AdvertisementService {
         orderId: data.orderId,
         customerId: data.customerId,
         eventName: data.eventName,
-        eventData: data.eventData || Prisma.JsonNull,
+        eventData: (data.eventData || Prisma.JsonNull) as any,
       },
     });
 
@@ -757,7 +764,7 @@ export class AdvertisementService {
       const fraudChecks = [
         this.checkVelocityFraud(type, adId, context),
         this.checkDuplicateFraud(type, adId, context),
-        this.checkBotFraud(context.userAgent),
+        this.checkBotFraud(context.userAgent || ''),
       ];
 
       const results = await Promise.all(fraudChecks);

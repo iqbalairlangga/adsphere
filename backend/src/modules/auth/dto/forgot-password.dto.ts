@@ -7,5 +7,5 @@ export class ForgotPasswordDto {
     description: 'Registered email address',
   })
   @IsEmail({}, { message: 'Invalid email address' })
-  email: string;
+  email!: string;
 }

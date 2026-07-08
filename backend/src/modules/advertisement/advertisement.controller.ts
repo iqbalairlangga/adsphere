@@ -8,7 +8,7 @@ import {
 } from '@nestjs/swagger';
 import {
   IsString, IsOptional, IsEnum, IsNumber, Min, IsObject,
-  IsUUID, IsUrl, IsBoolean, IsArray,
+  IsUUID, IsUrl, IsBoolean, IsArray, MinLength, MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Response, Request } from 'express';
@@ -22,15 +22,15 @@ import { AdType, AdStatus, UserRole } from '../../common/constants';
 
 class CreateAdDto {
   @IsUUID('4')
-  campaignId: string;
+  campaignId!: string;
 
   @IsEnum(AdType)
-  type: AdType;
+  type!: AdType;
 
   @IsString()
   @MinLength(3)
   @MaxLength(200)
-  name: string;
+  name!: string;
 
   @IsOptional()
   @IsString()
@@ -204,10 +204,10 @@ class UpdateAdDto {
 class BulkStatusDto {
   @IsArray()
   @IsUUID('4', { each: true })
-  ids: string[];
+  ids!: string[];
 
   @IsEnum(AdStatus)
-  status: AdStatus;
+  status!: AdStatus;
 }
 
 class TrackImpressionDto {

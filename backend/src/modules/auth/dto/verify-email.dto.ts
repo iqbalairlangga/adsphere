@@ -6,5 +6,5 @@ export class VerifyEmailDto {
     description: 'Email verification token',
   })
   @IsString()
-  token: string;
+  token!: string;
 }

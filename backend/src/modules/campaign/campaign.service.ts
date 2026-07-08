@@ -51,7 +51,7 @@ export class CampaignService {
         utmSource: dto.utmSource,
         utmMedium: dto.utmMedium,
         utmCampaign: dto.utmCampaign,
-        isATestEnabled: dto.isATestEnabled ?? false,
+        isABTestEnabled: dto.isABTestEnabled ?? false,
         status: CampaignStatus.DRAFT,
       },
       include: {
@@ -189,7 +189,7 @@ export class CampaignService {
     if (dto.utmSource !== undefined) data.utmSource = dto.utmSource;
     if (dto.utmMedium !== undefined) data.utmMedium = dto.utmMedium;
     if (dto.utmCampaign !== undefined) data.utmCampaign = dto.utmCampaign;
-    if (dto.isATestEnabled !== undefined) data.isATestEnabled = dto.isATestEnabled;
+    if (dto.isABTestEnabled !== undefined) data.isABTestEnabled = dto.isABTestEnabled;
 
     const updated = await this.prisma.campaign.update({
       where: { id },
@@ -245,7 +245,7 @@ export class CampaignService {
         utmSource: campaign.utmSource,
         utmMedium: campaign.utmMedium,
         utmCampaign: campaign.utmCampaign,
-        isATestEnabled: campaign.isATestEnabled,
+        isABTestEnabled: campaign.isABTestEnabled,
         status: CampaignStatus.DRAFT,
       },
     });
@@ -269,7 +269,7 @@ export class CampaignService {
           callToAction: ad.callToAction,
           altText: ad.altText,
           metadata: ad.metadata || Prisma.JsonNull,
-          isATestVariant: ad.isATestVariant,
+          isABTestVariant: ad.isABTestVariant,
           aTestGroup: ad.aTestGroup,
           status: 'PENDING',
         })),

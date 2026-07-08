@@ -14,13 +14,13 @@ import { AdType } from '../../../common/constants';
 export class CreateAdUnitDto {
   @ApiProperty()
   @IsString()
-  websiteId: string;
+  websiteId!: string;
 
   @ApiProperty({ example: 'Header Banner' })
   @IsString()
   @MinLength(2)
   @MaxLength(200)
-  name: string;
+  name!: string;
 
   @ApiPropertyOptional({ enum: AdType, example: AdType.BANNER })
   @IsOptional()

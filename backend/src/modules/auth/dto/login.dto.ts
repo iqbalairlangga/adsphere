@@ -7,14 +7,14 @@ export class LoginDto {
     description: 'User email address',
   })
   @IsEmail({}, { message: 'Invalid email address' })
-  email: string;
+  email!: string;
 
   @ApiProperty({
     example: 'StrongP@ssw0rd!',
     description: 'User password',
   })
   @IsString()
-  password: string;
+  password!: string;
 
   @ApiPropertyOptional({
     example: false,

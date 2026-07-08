@@ -19,7 +19,7 @@ import * as jwt from 'jsonwebtoken';
 })
 export class AnalyticsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
-  server: Server;
+  server!: Server;
 
   private readonly logger = new Logger(AnalyticsGateway.name);
   private connectedClients = new Map<string, Set<string>>();

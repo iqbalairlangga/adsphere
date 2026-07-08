@@ -4,13 +4,13 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class CreateWebsiteDto {
   @ApiProperty({ example: 'https://example.com' })
   @IsUrl({}, { message: 'Invalid website URL' })
-  url: string;
+  url!: string;
 
   @ApiProperty({ example: 'Example Blog' })
   @IsString()
   @MinLength(2)
   @MaxLength(200)
-  name: string;
+  name!: string;
 
   @ApiPropertyOptional({ example: 'A blog about technology' })
   @IsOptional()

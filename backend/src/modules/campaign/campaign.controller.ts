@@ -20,23 +20,10 @@ import { Public } from '../../common/decorators/public.decorator';
 import { CampaignStatus, CampaignType, UserRole } from '../../common/constants';
 
 class CreateCampaignDto {
-  @ApiBody({
-    schema: {
-      example: {
-        name: 'Summer Sale 2025',
-        description: 'Campaign for summer sales promotion',
-        type: 'DISPLAY',
-        budget: 5000,
-        dailyBudget: 500,
-        startDate: '2025-06-01T00:00:00Z',
-        endDate: '2025-08-31T23:59:59Z',
-      },
-    },
-  })
   @IsString()
   @MinLength(3)
   @MaxLength(200)
-  name: string;
+  name!: string;
 
   @IsOptional()
   @IsString()
@@ -49,7 +36,7 @@ class CreateCampaignDto {
 
   @IsNumber()
   @Min(0)
-  budget: number;
+  budget!: number;
 
   @IsOptional()
   @IsNumber()
@@ -86,7 +73,7 @@ class CreateCampaignDto {
 
   @IsOptional()
   @IsBoolean()
-  isATestEnabled?: boolean;
+  isABTestEnabled?: boolean;
 }
 
 class UpdateCampaignDto {
@@ -145,13 +132,13 @@ class UpdateCampaignDto {
 
   @IsOptional()
   @IsBoolean()
-  isATestEnabled?: boolean;
+  isABTestEnabled?: boolean;
 }
 
 class UpdateBudgetDto {
   @IsNumber()
   @Min(0)
-  budget: number;
+  budget!: number;
 
   @IsOptional()
   @IsNumber()

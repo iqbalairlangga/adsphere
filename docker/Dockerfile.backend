@@ -1,0 +1,41 @@
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+RUN corepack enable && corepack prepare pnpm@9 --activate
+
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
+COPY backend/package.json backend/
+COPY packages/ packages/
+
+RUN pnpm install --frozen-lockfile
+
+COPY backend/ backend/
+
+RUN pnpm --filter @adsphere/backend db:generate
+RUN pnpm --filter @adsphere/backend build
+
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+RUN corepack enable && corepack prepare pnpm@9 --activate
+
+RUN addgroup --system --gid 1001 adsphere && \
+    adduser --system --uid 1001 adsphere
+
+COPY --from=builder /app/backend/dist ./dist
+COPY --from=builder /app/backend/prisma ./prisma
+COPY --from=builder /app/backend/package.json ./
+COPY --from=builder /app/packages ./packages
+COPY --from=builder /app/pnpm-lock.yaml ./
+COPY --from=builder /app/pnpm-workspace.yaml ./
+
+RUN pnpm install --prod --frozen-lockfile
+RUN npx prisma generate
+
+USER adsphere
+
+EXPOSE 4000
+
+CMD ["node", "dist/main"]

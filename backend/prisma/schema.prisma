@@ -1,0 +1,817 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  ADVERTISER
+  PUBLISHER
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  BANNED
+}
+
+enum CampaignStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+  REJECTED
+}
+
+enum CampaignType {
+  DISPLAY
+  VIDEO
+  NATIVE
+  SOCIAL
+  SEARCH
+  PROGRAMMATIC
+}
+
+enum AdType {
+  BANNER
+  VIDEO
+  POPUP
+  INTERSTITIAL
+  REWARD
+  NATIVE
+  RESPONSIVE
+  AUTO
+}
+
+enum AdStatus {
+  PENDING
+  ACTIVE
+  PAUSED
+  REJECTED
+  COMPLETED
+}
+
+enum TargetingOperator {
+  EQUALS
+  NOT_EQUALS
+  CONTAINS
+  IN
+  NOT_IN
+  GREATER_THAN
+  LESS_THAN
+  BETWEEN
+}
+
+enum PaymentProvider {
+  STRIPE
+  MIDTRANS
+  PAYPAL
+  QRIS
+  BANK_TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+  EXPIRED
+}
+
+enum WalletTransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  PAYMENT
+  REFUND
+  COMMISSION
+  BONUS
+  ADJUSTMENT
+}
+
+enum NotificationType {
+  SYSTEM
+  CAMPAIGN
+  PAYMENT
+  ANALYTICS
+  SECURITY
+  BILLING
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  APPROVE
+  REJECT
+  SUSPEND
+  BAN
+  EXPORT
+}
+
+enum FraudSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum FraudStatus {
+  INVESTIGATING
+  CONFIRMED
+  FALSE_POSITIVE
+  RESOLVED
+}
+
+model User {
+  id                String          @id @default(cuid())
+  email             String          @unique
+  password          String?
+  name              String?
+  avatar            String?
+  role              UserRole        @default(ADVERTISER)
+  status            UserStatus      @default(PENDING)
+  emailVerified     Boolean         @default(false)
+  emailVerifyToken  String?
+  twoFactorEnabled  Boolean         @default(false)
+  twoFactorSecret   String?
+  twoFactorBackupCodes String[]
+  lastLoginAt       DateTime?
+  lastLoginIp       String?
+  metadata          Json?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  deletedAt         DateTime?
+
+  campaigns       Campaign[]
+  advertisements  Advertisement[]
+  websites        PublisherWebsite[]
+  notifications   Notification[]
+  apiKeys         ApiKey[]
+  sessions        Session[]
+  auditLogs       AuditLog[]
+  payments        Payment[]
+  wallet          Wallet?
+  invoices        Invoice[]
+  withdrawals     Withdraw[]
+  loginHistory    LoginHistory[]
+
+  @@index([email])
+  @@index([role])
+  @@index([status])
+  @@map("users")
+}
+
+model LoginHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  ip        String
+  userAgent String?
+  provider  String   @default("local")
+  success   Boolean  @default(true)
+  failReason String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("login_history")
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  description String?
+  isSystem    Boolean          @default(false)
+  permissions RolePermission[]
+  users       UserRoleAssignment[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([name])
+  @@map("roles")
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  description String?
+  resource    String
+  action      String
+  roles       RolePermission[]
+  createdAt   DateTime         @default(now())
+
+  @@index([name])
+  @@index([resource, action])
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  conditions   Json?
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model UserRoleAssignment {
+  id        String   @id @default(cuid())
+  userId    String
+  roleId    String
+  assignedBy String?
+  createdAt DateTime @default(now())
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role  @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@map("user_role_assignments")
+}
+
+model Campaign {
+  id            String         @id @default(cuid())
+  userId        String
+  name          String
+  description   String?
+  status        CampaignStatus @default(DRAFT)
+  type          CampaignType   @default(DISPLAY)
+  budget        Decimal        @default(0)
+  dailyBudget   Decimal?
+  spent         Decimal        @default(0)
+  startDate     DateTime
+  endDate       DateTime?
+  targeting     Json?
+  schedule      Json?
+  utmSource     String?
+  utmMedium     String?
+  utmCampaign   String?
+  isA TestEnabled Boolean      @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
+
+  user          User           @relation(fields: [userId], references: [id])
+  advertisements Advertisement[]
+  conversions   Conversion[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@index([startDate, endDate])
+  @@map("campaigns")
+}
+
+model Advertisement {
+  id            String    @id @default(cuid())
+  campaignId    String
+  name          String
+  type          AdType    @default(BANNER)
+  title         String?
+  description   String?
+  mediaUrl      String?
+  mediaUrls     String[]
+  targetUrl     String
+  dimensions    String?
+  width         Int?
+  height        Int?
+  weight        Decimal?
+  content       String?
+  html          String?
+  css           String?
+  js            String?
+  callToAction  String?
+  altText       String?
+  status        AdStatus  @default(PENDING)
+  impressions   Int       @default(0)
+  clicks        Int       @default(0)
+  conversions   Int       @default(0)
+  spend         Decimal   @default(0)
+  revenue       Decimal   @default(0)
+  metadata      Json?
+  isA TestVariant Boolean @default(false)
+  aTestGroup    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  campaign       Campaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  adPlacements   AdPlacement[]
+  adImpressions  AdImpression[]
+  adClicks       AdClick[]
+  adConversions  AdConversion[]
+
+  @@index([campaignId])
+  @@index([type])
+  @@index([status])
+  @@map("advertisements")
+}
+
+model PublisherWebsite {
+  id          String   @id @default(cuid())
+  userId      String
+  domain      String   @unique
+  name        String
+  description String?
+  category    String?
+  language    String   @default("en")
+  traffic     Int      @default(0)
+  monthlyPageviews Int @default(0)
+  status      String   @default("active")
+  verified    Boolean  @default(false)
+  verificationToken String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user     User       @relation(fields: [userId], references: [id])
+  adUnits  AdUnit[]
+
+  @@index([userId])
+  @@index([domain])
+  @@map("publisher_websites")
+}
+
+model AdUnit {
+  id               String   @id @default(cuid())
+  websiteId        String
+  name             String
+  type             AdType   @default(BANNER)
+  width            Int?
+  height           Int?
+  adSize           String?
+  placement        String?
+  status           String   @default("active")
+  autoRefresh      Boolean  @default(false)
+  refreshInterval  Int?
+  responsive       Boolean  @default(false)
+  priceFloor       Decimal?
+  fallbackUrl      String?
+  metadata         Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  website      PublisherWebsite @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  adPlacements AdPlacement[]
+
+  @@index([websiteId])
+  @@map("ad_units")
+}
+
+model AdPlacement {
+  id              String        @id @default(cuid())
+  adUnitId        String
+  advertisementId String
+  status          String        @default("active")
+  bidAmount       Decimal?
+  priority        Int           @default(0)
+  startedAt       DateTime?
+  endedAt         DateTime?
+  metadata        Json?
+  createdAt       DateTime      @default(now())
+
+  adUnit        AdUnit        @relation(fields: [adUnitId], references: [id], onDelete: Cascade)
+  advertisement Advertisement @relation(fields: [advertisementId], references: [id], onDelete: Cascade)
+
+  @@index([adUnitId])
+  @@index([advertisementId])
+  @@map("ad_placements")
+}
+
+model AdImpression {
+  id              String   @id @default(cuid())
+  advertisementId String
+  adUnitId        String?
+  ip              String?
+  userAgent       String?
+  referer         String?
+  country         String?
+  city            String?
+  device          String?
+  browser         String?
+  os              String?
+  language        String?
+  sessionId       String?
+  userId          String?
+  cost            Decimal  @default(0)
+  revenue         Decimal  @default(0)
+  bidAmount       Decimal?
+  isUnique        Boolean  @default(false)
+  isFraud         Boolean  @default(false)
+  metadata        Json?
+  createdAt       DateTime @default(now())
+
+  advertisement Advertisement @relation(fields: [advertisementId], references: [id], onDelete: Cascade)
+
+  @@index([advertisementId])
+  @@index([createdAt])
+  @@index([country])
+  @@index([isFraud])
+  @@map("ad_impressions")
+}
+
+model AdClick {
+  id              String   @id @default(cuid())
+  advertisementId String
+  adUnitId        String?
+  ip              String?
+  userAgent       String?
+  referer         String?
+  country         String?
+  city            String?
+  device          String?
+  browser         String?
+  os              String?
+  sessionId       String?
+  userId          String?
+  cost            Decimal  @default(0)
+  revenue         Decimal  @default(0)
+  bidAmount       Decimal?
+  isUnique        Boolean  @default(false)
+  isFraud         Boolean  @default(false)
+  metadata        Json?
+  createdAt       DateTime @default(now())
+
+  advertisement Advertisement @relation(fields: [advertisementId], references: [id], onDelete: Cascade)
+
+  @@index([advertisementId])
+  @@index([createdAt])
+  @@index([country])
+  @@index([isFraud])
+  @@map("ad_clicks")
+}
+
+model Conversion {
+  id              String   @id @default(cuid())
+  campaignId      String
+  advertisementId String?
+  type            String?
+  value           Decimal?
+  currency        String   @default("USD")
+  orderId         String?
+  customerId      String?
+  eventName       String?
+  eventData       Json?
+  ip              String?
+  userAgent       String?
+  cookieId        String?
+  isFraud         Boolean  @default(false)
+  metadata        Json?
+  createdAt       DateTime @default(now())
+
+  campaign      Campaign      @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  advertisement Advertisement? @relation(fields: [advertisementId], references: [id])
+
+  @@index([campaignId])
+  @@index([createdAt])
+  @@index([eventName])
+  @@map("conversions")
+}
+
+model AdConversion {
+  id              String   @id @default(cuid())
+  advertisementId String
+  conversionId    String
+  value           Decimal?
+  currency        String   @default("USD")
+  cost            Decimal  @default(0)
+  revenue         Decimal  @default(0)
+  createdAt       DateTime @default(now())
+
+  advertisement Advertisement @relation(fields: [advertisementId], references: [id], onDelete: Cascade)
+
+  @@index([advertisementId])
+  @@map("ad_conversions")
+}
+
+model Payment {
+  id              String         @id @default(cuid())
+  userId          String
+  invoiceId       String?
+  amount          Decimal
+  currency        String         @default("USD")
+  provider        PaymentProvider
+  providerPaymentId String?
+  status          PaymentStatus  @default(PENDING)
+  method          String?
+  description     String?
+  metadata        Json?
+  paidAt          DateTime?
+  expiresAt       DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id])
+  invoice   Invoice?  @relation(fields: [invoiceId], references: [id])
+  refunds   Refund[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([provider, providerPaymentId])
+  @@map("payments")
+}
+
+model Refund {
+  id          String        @id @default(cuid())
+  paymentId   String
+  amount      Decimal
+  currency    String        @default("USD")
+  reason      String?
+  status      PaymentStatus @default(PENDING)
+  providerRefundId String?
+  metadata    Json?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@index([paymentId])
+  @@map("refunds")
+}
+
+model Invoice {
+  id          String        @id @default(cuid())
+  userId      String
+  number      String        @unique
+  amount      Decimal
+  currency    String        @default("USD")
+  status      PaymentStatus @default(PENDING)
+  type        String?
+  description String?
+  items       Json?
+  dueDate     DateTime?
+  paidAt      DateTime?
+  metadata    Json?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id])
+  payments Payment[]
+
+  @@index([userId])
+  @@index([number])
+  @@index([status])
+  @@map("invoices")
+}
+
+model Wallet {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  balance     Decimal  @default(0)
+  lockedBalance Decimal @default(0)
+  currency    String   @default("USD")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User               @relation(fields: [userId], references: [id])
+  transactions WalletTransaction[]
+  withdrawals Withdraw[]
+
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id          String               @id @default(cuid())
+  walletId    String
+  type        WalletTransactionType
+  amount      Decimal
+  currency    String               @default("USD")
+  balanceBefore Decimal
+  balanceAfter  Decimal
+  description String?
+  referenceId String?
+  referenceType String?
+  metadata    Json?
+  createdAt   DateTime             @default(now())
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([createdAt])
+  @@index([type])
+  @@map("wallet_transactions")
+}
+
+model Withdraw {
+  id          String        @id @default(cuid())
+  userId      String
+  walletId    String
+  amount      Decimal
+  currency    String        @default("USD")
+  fee         Decimal       @default(0)
+  netAmount   Decimal
+  method      String?
+  accountInfo Json?
+  status      PaymentStatus @default(PENDING)
+  approvedBy  String?
+  approvedAt  DateTime?
+  metadata    Json?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id])
+  wallet Wallet @relation(fields: [walletId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@map("withdrawals")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType @default(SYSTEM)
+  title     String
+  message   String?
+  data      Json?
+  read      Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id          String       @id @default(cuid())
+  userId      String?
+  action      AuditAction
+  resource    String
+  resourceId  String?
+  details     Json?
+  ip          String?
+  userAgent   String?
+  severity    String       @default("info")
+  metadata    Json?
+  createdAt   DateTime     @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([resource, resourceId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model ApiKey {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  key       String   @unique
+  prefix    String
+  scopes    String[]
+  lastUsed  DateTime?
+  expiresAt DateTime?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([key])
+  @@index([userId])
+  @@map("api_keys")
+}
+
+model Session {
+  id            String   @id @default(cuid())
+  userId        String
+  token         String   @unique
+  refreshToken  String?
+  ip            String?
+  userAgent     String?
+  device        String?
+  location      String?
+  isActive      Boolean  @default(true)
+  lastActivity  DateTime @default(now())
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model FraudRule {
+  id          String       @id @default(cuid())
+  name        String
+  description String?
+  type        String
+  conditions  Json
+  action      String       @default("flag")
+  severity    FraudSeverity @default(MEDIUM)
+  active      Boolean      @default(true)
+  priority    Int          @default(0)
+  metadata    Json?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  detections FraudDetection[]
+
+  @@index([type, active])
+  @@map("fraud_rules")
+}
+
+model FraudDetection {
+  id              String        @id @default(cuid())
+  ruleId          String?
+  advertisementId String?
+  impressionId    String?
+  clickId         String?
+  conversionId    String?
+  type            String
+  score           Float         @default(0)
+  severity        FraudSeverity @default(MEDIUM)
+  status          FraudStatus   @default(INVESTIGATING)
+  details         Json?
+  ip              String?
+  userAgent       String?
+  metadata        Json?
+  detectedAt      DateTime      @default(now())
+  resolvedAt      DateTime?
+  resolvedBy      String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  rule FraudRule? @relation(fields: [ruleId], references: [id])
+
+  @@index([ruleId])
+  @@index([type])
+  @@index([status])
+  @@index([score])
+  @@map("fraud_detections")
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  group     String   @default("general")
+  type      String   @default("string")
+  description String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+  @@index([group])
+  @@map("settings")
+}
+
+model Payout {
+  id            String        @id @default(cuid())
+  publisherId   String
+  amount        Decimal
+  currency      String        @default("USD")
+  periodStart   DateTime
+  periodEnd     DateTime
+  status        PaymentStatus @default(PENDING)
+  method        String?
+  accountInfo   Json?
+  paidAt        DateTime?
+  metadata      Json?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([publisherId])
+  @@index([status])
+  @@map("payouts")
+}
+
+model RevenueShare {
+  id          String   @id @default(cuid())
+  publisherId String
+  advertiserId String?
+  campaignId  String?
+  revenue     Decimal  @default(0)
+  share       Decimal  @default(0)
+  amount      Decimal  @default(0)
+  currency    String   @default("USD")
+  periodStart DateTime?
+  periodEnd   DateTime?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([publisherId])
+  @@index([campaignId])
+  @@map("revenue_shares")
+}

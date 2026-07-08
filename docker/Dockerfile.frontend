@@ -1,0 +1,37 @@
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+RUN corepack enable && corepack prepare pnpm@9 --activate
+
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
+COPY frontend/package.json frontend/
+COPY packages/ packages/
+
+RUN pnpm install --frozen-lockfile
+
+COPY frontend/ frontend/
+
+RUN pnpm --filter @adsphere/frontend build
+
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+RUN addgroup --system --gid 1001 adsphere && \
+    adduser --system --uid 1001 adsphere
+
+COPY --from=builder /app/frontend/.next ./.next
+COPY --from=builder /app/frontend/public ./public
+COPY --from=builder /app/frontend/package.json ./
+COPY --from=builder /app/frontend/next.config.js ./
+COPY --from=builder /app/packages ./packages
+
+RUN corepack enable && corepack prepare pnpm@9 --activate
+RUN pnpm install --prod --frozen-lockfile
+
+USER adsphere
+
+EXPOSE 3000
+
+CMD ["pnpm", "start"]

@@ -1,0 +1,21 @@
+# Global owners
+* @adsphere/core
+
+# Backend
+/backend/ @adsphere/backend-team
+
+# Frontend
+/frontend/ @adsphere/frontend-team
+
+# DevOps
+/docker/ @adsphere/devops-team
+/.github/workflows/ @adsphere/devops-team
+
+# Database
+/database/ @adsphere/backend-team @adsphere/devops-team
+
+# Documentation
+/docs/ @adsphere/core
+
+# Tests
+/tests/ @adsphere/qa-team

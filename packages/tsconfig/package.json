@@ -1,0 +1,6 @@
+{
+  "name": "@adsphere/tsconfig",
+  "version": "0.1.0",
+  "main": "base.json",
+  "files": ["base.json", "nextjs.json", "nestjs.json"]
+}

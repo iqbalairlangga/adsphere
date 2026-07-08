@@ -1,0 +1,52 @@
+{
+  "name": "adsphere",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Enterprise Advertising Platform",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "test": "turbo test",
+    "test:e2e": "turbo test:e2e",
+    "lint": "turbo lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md}\"",
+    "typecheck": "turbo typecheck",
+    "clean": "turbo clean",
+    "db:generate": "pnpm --filter @adsphere/backend db:generate",
+    "db:migrate": "pnpm --filter @adsphere/backend db:migrate",
+    "db:push": "pnpm --filter @adsphere/backend db:push",
+    "db:seed": "pnpm --filter @adsphere/backend db:seed",
+    "db:studio": "pnpm --filter @adsphere/backend db:studio",
+    "docker:dev": "docker compose -f docker/docker-compose.dev.yml up",
+    "docker:prod": "docker compose -f docker/docker-compose.prod.yml up",
+    "prepare": "husky",
+    "commit": "cz"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "devDependencies": {
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
+    "commitizen": "^4.3.0",
+    "cz-conventional-changelog": "^3.3.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0",
+    "prettier": "^3.2.0",
+    "prettier-plugin-tailwindcss": "^0.6.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.5.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": ["eslint --fix", "prettier --write"],
+    "*.{json,md,yaml,yml}": ["prettier --write"]
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  }
+}
